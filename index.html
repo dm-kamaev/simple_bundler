@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang='RU'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Loader modules</title>
+</head>
+<body>
+  <script>
+
+var LIST_MODULES = {
+  '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx1.js': {
+    'md5': '522d91b80da9aaa11d25fdb09d4a323c',
+    'version': 1
+  },
+  '/j/app_interface_select_report/app_interface_select_report.js': {
+    'md5': '812919f7f1d1b03bdb3a588e676a59d8',
+    'version': 2
+  }
+};
+
+var loader = {};
+/**
+ * require
+ * @param  {string | { src: string }} what
+ * @param  {function(err)} cb
+ */
+loader.require = function (what, cb) {
+  var src;
+  if (typeof what === 'string') {
+    src = what;
+  }
+  var describe_modules = LIST_MODULES[src];
+  if (loader.is_loaded(src)) {
+    return cb();
+  }
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.async = true;
+  script.text = 'alert("12313123");';
+  var version = describe_modules.version;
+  script.setAttribute('src', '.'+src+'?a'+version);
+  script.onload = function () {
+    loader.set_loaded(src);
+    cb();
+  };
+  script.onerror = function () {
+    throw new Error('Fail loaded script '+src);
+  };
+  document.body.appendChild(script);
+};
+
+/**
+ * set_loaded
+ * @param {string} src
+ */
+loader.set_loaded = function (src) {
+  LIST_MODULES[src].loaded = true;
+};
+
+
+/**
+ * is_loaded
+ * @param  {string}  src
+ * @return {Boolean}     [description]
+ */
+loader.is_loaded = function (src) {
+  return LIST_MODULES[src].loaded === true;
+};
+
+
+/**
+ * require_list
+ * @param  {string[] | Array<{ src: string }>} list
+ * @param  {function(err)} cb
+ */
+loader.require_list = function (list, cb) {
+  var arr = [];
+  for (var i = 0, l = list.length; i < l; i++) {
+    var what_load = list[i];
+    arr.push((function(wl) {
+      return function (cb) {
+        loader.require(wl, cb);
+      };
+    })(what_load));
+  }
+  loader._step_by_step(arr, cb);
+};
+
+
+/**
+ * _step_by_step
+ * @param  {Array<function>} f_array
+ * @param  {function(err)} finish_callback
+ */
+loader._step_by_step = function (f_array, finish_callback) {
+  var current = 0;
+  var finish = f_array.length;
+
+  var internal_callback = function(err, data) {
+    if (err) {
+      finish_callback(err); // Если ошибка, взываем главный callback серии
+    } else if (current < finish) { // Пока не кончился массив берем элемент массива (функцию)
+      var el_array = f_array[current];
+      current++;
+      el_array(internal_callback, data);
+    } else {
+      finish_callback(null, data);
+    }
+  };
+  internal_callback();
+};
+
+
+// loader.require_list([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx1.js', '/j/app_interface_select_report/app_interface_select_report.js' ], function () {
+//   console.log('LOADED ALL');
+// });
+
+// loader.require('/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', function () {
+//   console.log('script.onload');
+//   loader.require('/j/app_interface_select_report/app_interface_select_report.js', function () {
+//     console.log('script.onload');
+//     loader.require('/j/app_interface_select_report/app_interface_select_report.js', function () {
+//       console.log('script.onload');
+//     });
+//   });
+// });
+  </script>
+</body>
+</html>
