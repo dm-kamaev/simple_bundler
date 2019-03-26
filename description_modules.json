@@ -1,14 +1,14 @@
 {
   "/Users/mitya/Desktop/Start/bundler/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js": {
-    "version": 2,
-    "md5": "522d91b80da9aaa11d25fdb09d4a323c"
-  },
-  "/Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/app_interface_select_report.js": {
-    "version": 2,
-    "md5": "812919f7f1d1b03bdb3a588e676a59d8"
+    "md5": "522d91b80da9aaa11d25fdb09d4a323c",
+    "version": 1
   },
   "/Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/h_list_banks.js": {
-    "version": 2,
-    "md5": "9c2edef5d31188462167d4e6786bc438"
+    "md5": "7848cec89aa6606ffa66c1cd8755f457",
+    "version": 2
+  },
+  "/Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/app_interface_select_report.js": {
+    "md5": "812919f7f1d1b03bdb3a588e676a59d8",
+    "version": 1
   }
 }

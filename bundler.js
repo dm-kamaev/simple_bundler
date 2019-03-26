@@ -50,6 +50,10 @@ async function main(src_dir, out_dir, { is_prod, path_describe_module, filename 
       if (is_prod) {
         var md5 = create_md5(code);
         if (hash[p]) {
+          // if (md5 !== hash[p].md5) {
+          //   console.log(md5, hash[p].md5, md5 === hash[p].md5, hash[p], code);
+          //   global.process.exit();
+          // }
           if (manage_hash.was_changed(md5)) {
             manage_hash.update(md5);
           }
@@ -59,7 +63,7 @@ async function main(src_dir, out_dir, { is_prod, path_describe_module, filename 
         code = minify_code(code);
       } else {
         if (!hash[p]) {
-          manage_hash.init();
+          manage_hash.init(create_md5(code));
         }
       }
 
@@ -198,6 +202,7 @@ if (!module.parent) {
     try {
       await main(src_dir, out_dir, { is_prod, path_describe_module });
       if (!is_prod) {
+        console.log('Start watching -->');
         start_watcher(src_dir, async function (filename) {
           await main(src_dir, out_dir, { is_prod, path_describe_module, filename });
         });
