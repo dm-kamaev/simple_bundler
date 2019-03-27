@@ -12,8 +12,9 @@ const crypto = require('crypto');
 const Terser = require('terser');
 const node_watch = require('node-watch');
 
+const bundler = module.exports;
 
-async function main(src_dir, out_dir, { is_prod, path_describe_module, filename }) {
+bundler.build = async function (src_dir, out_dir, { is_prod, path_describe_module, filename }) {
   console.time('Build');
 
   let hash = {};
@@ -76,16 +77,16 @@ async function main(src_dir, out_dir, { is_prod, path_describe_module, filename 
   write(path_describe_module, JSON.stringify(hash, null, 2));
 
   console.timeEnd('Build');
-}
+};
 
 
-function start_watcher(src_dir, cb) {
+bundler.start_watcher = function (src_dir, cb) {
   // filename - /Users/mitya/Desktop/Start/bundler/src_client/app_interface_select_report/h_list_banks.js
   node_watch(src_dir, { recursive: true }, function (event, filename) {
     console.log('[event]', event, 'filename = ', filename);
     cb(filename);
   });
-}
+};
 
 /**
  * get_list_files - recursive
@@ -200,11 +201,11 @@ if (!module.parent) {
     const path_describe_module = path.join(__dirname, './description_modules.json');
 
     try {
-      await main(src_dir, out_dir, { is_prod, path_describe_module });
+      await bundler.build(src_dir, out_dir, { is_prod, path_describe_module });
       if (!is_prod) {
         console.log('Start watching -->');
-        start_watcher(src_dir, async function (filename) {
-          await main(src_dir, out_dir, { is_prod, path_describe_module, filename });
+        bundler.start_watcher(src_dir, async function (filename) {
+          await bundler.build(src_dir, out_dir, { is_prod, path_describe_module, filename });
         });
       }
     } catch (err) {
