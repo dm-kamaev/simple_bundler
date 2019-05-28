@@ -3,6 +3,7 @@
 // Check changes version via md5, for production
 // if dev, not change version
 
+// TODO: fix this /Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/app_interface_select_report.js in description_modules.json
 // TODO: make config file for different environments
 
 const fs = require('fs');
@@ -68,7 +69,7 @@ bundler.build = async function (src_dir, out_dir, { is_prod, path_describe_modul
         }
       }
 
-      await wf.write(p, code);
+      await wf.write(p, wrap_code(code, p));
     }());
   });
   await Promise.all(actions);
@@ -135,6 +136,21 @@ function create_md5(str) {
 }
 
 
+/**
+ * wrap_code - add global variable for module
+ * @param  {string} code
+ * @param  {string} module_name - path to code
+ * @return {string} js
+ */
+function wrap_code(code, module_name) {
+  return (
+    '(function(__module_name){'+
+      code+
+    '}("'+module_name+'"));'
+  );
+}
+
+
 class Manage_hash {
   /**
    * constructor
@@ -197,7 +213,7 @@ if (!module.parent) {
   void async function () {
     const src_dir = path.join(__dirname, './src_client/');
     const out_dir = path.join(__dirname, './j/');
-    const is_prod = true;
+    const is_prod = false;
     const path_describe_module = path.join(__dirname, './description_modules.json');
 
     try {
