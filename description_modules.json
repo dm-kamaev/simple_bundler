@@ -1,14 +1,38 @@
 {
-  "/Users/mitya/Desktop/Start/bundler/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js": {
+  "/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js": {
     "md5": "d83fbe26154ad6d89d71919c0fdfcf84",
-    "version": 2
+    "version": 1
   },
-  "/Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/h_list_banks.js": {
+  "/j/app_interface_select_report/h_list_banks.js": {
     "md5": "9c2edef5d31188462167d4e6786bc438",
-    "version": 3
+    "version": 1
   },
-  "/Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/app_interface_select_report.js": {
+  "/j/app_interface_select_report/app_interface_select_report.js": {
     "md5": "812919f7f1d1b03bdb3a588e676a59d8",
+    "version": 1
+  },
+  "/Users/mitya/Desktop/Start/bundler/Vasya/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js": {
+    "md5": "d83fbe26154ad6d89d71919c0fdfcf84",
+    "version": 1
+  },
+  "/Users/mitya/Desktop/Start/bundler/Vasya/app_interface_select_report/h_list_banks.js": {
+    "md5": "9c2edef5d31188462167d4e6786bc438",
+    "version": 1
+  },
+  "/Users/mitya/Desktop/Start/bundler/Vasya/app_interface_select_report/app_interface_select_report.js": {
+    "md5": "812919f7f1d1b03bdb3a588e676a59d8",
+    "version": 1
+  },
+  "/Petya/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js": {
+    "md5": "d83fbe26154ad6d89d71919c0fdfcf84",
+    "version": 1
+  },
+  "/Petya/app_interface_select_report/app_interface_select_report.js": {
+    "md5": "812919f7f1d1b03bdb3a588e676a59d8",
+    "version": 1
+  },
+  "/Petya/app_interface_select_report/h_list_banks.js": {
+    "md5": "9c2edef5d31188462167d4e6786bc438",
     "version": 1
   }
 }

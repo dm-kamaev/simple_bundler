@@ -15,25 +15,37 @@ const node_watch = require('node-watch');
 
 const bundler = module.exports;
 
-bundler.build = async function (src_dir, out_dir, { is_prod, path_describe_module, filename }) {
+
+/**
+ * build
+ * @param  {{ input_dir: string }} src, input_dir - absolute path(file system) to source code
+ * @param  {{ output_dir: string, path_for_browser: string }} out, output_dir - absolute path(file system) for result
+ * @param  {boolean} options.is_prod
+ * @param  {string} options.path_describe_module - path where file with info for client js
+ * @param  {[string]} options.filename - path to filename, if rebuild one file
+ */
+bundler.build = async function (src, out, { is_prod, path_describe_module, filename }) {
   console.time('Build');
 
   let hash = {};
   if (exist(path_describe_module)) {
     hash = JSON.parse(sync_read(path_describe_module));
+    // remove_not_exist_file(hash, out.path_for_browser, src.input_dir);
   }
 
+  var input_dir = src.input_dir;
+  var output_dir = out.output_dir;
   var list_src_paths;
   if (filename) {
     list_src_paths = [ filename ];
   } else {
-    list_src_paths = get_list_files(src_dir);
+    list_src_paths = get_list_files(input_dir);
   }
   list_src_paths = list_src_paths.filter(p => path.extname(p) === '.js');
 
-  var list_out_paths = list_src_paths.map(p => p.replace(new RegExp('^'+src_dir), out_dir));
+  var list_out_paths = list_src_paths.map(p => p.replace(new RegExp('^'+input_dir), output_dir));
 
-  create_folder(out_dir);
+  create_folder(output_dir);
 
   // cache for exist dir
   var already_exist_dir = {};
@@ -47,15 +59,10 @@ bundler.build = async function (src_dir, out_dir, { is_prod, path_describe_modul
         already_exist_dir[dir] = true;
       }
       var code = await wf.read(list_src_paths[i]);
-
       var manage_hash = new Manage_hash(hash, p);
       if (is_prod) {
         var md5 = create_md5(code);
         if (hash[p]) {
-          // if (md5 !== hash[p].md5) {
-          //   console.log(md5, hash[p].md5, md5 === hash[p].md5, hash[p], code);
-          //   global.process.exit();
-          // }
           if (manage_hash.was_changed(md5)) {
             manage_hash.update(md5);
           }
@@ -75,7 +82,7 @@ bundler.build = async function (src_dir, out_dir, { is_prod, path_describe_modul
   await Promise.all(actions);
   console.log(list_src_paths, list_out_paths);
 
-  write(path_describe_module, JSON.stringify(hash, null, 2));
+  Manage_hash.write(path_describe_module, out.path_for_browser, hash);
 
   console.timeEnd('Build');
 };
@@ -153,6 +160,23 @@ function wrap_code(code, module_name) {
 
 class Manage_hash {
   /**
+   * write - write to file hash iwht description modules
+   * @param  {string} path_describe_module
+   * @param  {string} out_folder - '/j/'
+   * @param  {{ [path: string]: md5: string, version: number }} input_hash
+   */
+  static write(path_describe_module, out_folder, input_hash) {
+    // /^(.+?)(\/j\/)/
+    // reg exp for remove extra path
+    var reg_exp = new RegExp('^(.+?)('+out_folder+')');
+    var out_hash = {};
+    Object.keys(input_hash).forEach(path => {
+      out_hash[path.replace(reg_exp, '$2')] = input_hash[path] ;
+    });
+    write(path_describe_module, JSON.stringify(out_hash, null, 2));
+  }
+
+  /**
    * constructor
    * @param  {{ md5: string, version: string }} hash - modules
    * @param  {string} path - path as key
@@ -194,6 +218,16 @@ class Manage_hash {
 }
 
 
+// function remove_not_exist_file(hash, browser_dir, src_dir) {
+//   Object.keys(hash).forEach(client_path => {
+//     var path = client_path.replace(browser_dir, src_dir);
+//     if (!exist(path)) {
+//       console.log(path, exist(path));
+//     }
+//   });
+// }
+
+
 /**
  * minify_code
  * @param  {string} code
@@ -213,11 +247,15 @@ if (!module.parent) {
   void async function () {
     const src_dir = path.join(__dirname, './src_client/');
     const out_dir = path.join(__dirname, './j/');
+
+    const src = { input_dir: src_dir, };
+    const out = { output_dir: out_dir, path_for_browser: '/j/' };
+
     const is_prod = false;
     const path_describe_module = path.join(__dirname, './description_modules.json');
 
     try {
-      await bundler.build(src_dir, out_dir, { is_prod, path_describe_module });
+      await bundler.build(src, out, { is_prod, path_describe_module });
       if (!is_prod) {
         console.log('Start watching -->');
         bundler.start_watcher(src_dir, async function (filename) {
