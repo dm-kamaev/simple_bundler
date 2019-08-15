@@ -1,17 +1,28 @@
 module.exports = {
   'env': {
-    es6: true,
+    browser: true,
     node: true,
-    mocha: true,
-    browser: false,
+    mocha: false,
     jquery: false,
   },
   'extends': 'eslint:recommended',
   'parserOptions': {
-    'ecmaVersion': 9,
-    "sourceType": "module",
+    'ecmaVersion': 2015,
+  },
+  'globals': {
+    'getByID': true,
+    'W': true,
+    'getTarget': true,
+    'rebuildArray': true,
+    'MODULES': true,
+    'cleanInput': true,
+    'removeElArray': true,
+    '_ajx': true,
+    'D': true,
+    'W': true
   },
   'rules': {
+    "no-restricted-syntax": ["error", "WithStatement", "BinaryExpression[operator='in']"],
     "max-len": [ 2, {
       "code": 200, "tabWidth": 2, 'ignoreComments': true, "ignoreUrls": true } ],
     'indent': [
@@ -31,10 +42,7 @@ module.exports = {
       'error',
       'always'
     ],
-    "no-unused-vars": ['error', {
-      "varsIgnorePattern": "_",
-      "argsIgnorePattern": "_"
-    }],
+    'require-atomic-updates': 'off',
     'no-use-before-define': [
       'error',
       { "functions": false, "classes": false }
@@ -47,13 +55,6 @@ module.exports = {
     'no-useless-catch': [ 'error' ],
     'guard-for-in': [ 'error' ],
     'no-extend-native': [ 'error' ],
-
-    // node js
-    'handle-callback-err': [ 'error' ],
-    'global-require': [ 'error' ],
-    'callback-return': [ 'error' ],
-    'no-buffer-constructor': [ 'error' ],
-    'no-new-require': [ 'error' ],
 
     "eqeqeq": ["error", "always"],
     'no-extra-boolean-cast': ['off'],
