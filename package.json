@@ -12,5 +12,8 @@
   "dependencies": {
     "node-watch": "^0.6.0",
     "terser": "^3.17.0"
+  },
+  "devDependencies": {
+    "mocha": "6.2.0"
   }
 }

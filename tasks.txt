@@ -1,0 +1,19 @@
+# TASKS
+
+bundler:
+  1) right path for module when wrap
+  2) Test version
+    - first build dev
+    - repeat build dev: not change, change
+    - first build prod
+    - repeat build prod: not change, change
+  3) make config for
+    - dev
+    - prod
+
+loader:
+  1) Without version when dev mode
+  2) With version when prod mode
+  3) loader.done => loader.module_loaded()
+  4) make description for method
+  5) debug mode

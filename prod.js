@@ -19,7 +19,7 @@ const bundler = module.exports;
 /**
  * build
  * @param  {{ input_dir: string }} src, input_dir - absolute path(file system) to source code
- * @param  {{ output_dir: string, root_browser_folder: string }} out, output_dir - absolute path(file system) for result, root_browser_folder - root folder, which used into frontend code for loading modules
+ * @param  {{ output_dir: string, browser_dir: string }} out, output_dir - absolute path(file system) for result
  * @param  {boolean} options.is_prod
  * @param  {string} options.path_describe_module - path where file with info for client js
  * @param  {[string]} options.filename - path to filename, if rebuild one file
@@ -27,21 +27,13 @@ const bundler = module.exports;
 bundler.build = async function (src, out, { is_prod, path_describe_module, filename }) {
   console.time('Build');
 
-  var input_dir = src.input_dir;
-  var output_dir = out.output_dir;
-  var root_browser_folder = out.root_browser_folder;
-
-  var hash = {};
+  let hash = {};
   if (wf_sync.exist(path_describe_module)) {
     hash = JSON.parse(wf_sync.read(path_describe_module));
-    var temp_hash = {};
-    var prefix_folder = input_dir.replace(new RegExp('^(.+?)('+root_browser_folder+')'), '$1');
-    Object.keys(hash).forEach(p => {
-      temp_hash[path.join(prefix_folder, p)] = hash[p];
-    });
-    hash = temp_hash;
   }
 
+  var input_dir = src.input_dir;
+  var output_dir = out.output_dir;
   var list_src_paths;
   if (filename) {
     list_src_paths = [ filename ];
@@ -69,7 +61,6 @@ bundler.build = async function (src, out, { is_prod, path_describe_module, filen
       var manage_hash = new Manage_hash(hash, p);
       if (is_prod) {
         var md5 = create_md5(code);
-        console.log('hash=', hash, path.join(input_dir, p));
         if (hash[p]) {
           if (manage_hash.was_changed(md5)) {
             manage_hash.update(md5);
@@ -84,42 +75,27 @@ bundler.build = async function (src, out, { is_prod, path_describe_module, filen
         }
       }
 
-      await wf.write(p, wrap_code(code, p, root_browser_folder));
+      await wf.write(p, wrap_code(code, p, out.browser_dir));
     }());
   });
   await Promise.all(actions);
-
   console.log(list_src_paths, list_out_paths);
 
-  Manage_hash.write(path_describe_module, root_browser_folder, hash);
+  Manage_hash.write(path_describe_module, out.browser_dir, hash);
 
   console.timeEnd('Build');
-
-  return {
-    hash
-  };
 };
 
 
-/**
- * start_watcher
- * @param  {{ input_dir: string }} src, input_dir - absolute path(file system) to source code
- * @param  {Function} cb      [description]
- */
-bundler.start_watcher = function (src, cb) {
-  node_watch(src.input_dir, { recursive: true }, function (event, filename) {
-    // filename - /Users/mitya/Desktop/Start/bundler/src_client/app_interface_select_report/h_list_banks.js
+bundler.start_watcher = function (src_dir, cb) {
+  // filename - /Users/mitya/Desktop/Start/bundler/src_client/app_interface_select_report/h_list_banks.js
+  node_watch(src_dir, { recursive: true }, function (event, filename) {
     console.log('[event]', event, 'filename = ', filename);
     cb(filename);
   });
 };
 
 
-/**
- * create_md5
- * @param  {string} str
- * @return {string}
- */
 function create_md5(str) {
   return crypto.createHash('md5').update(str).digest('hex');
 }
@@ -127,14 +103,12 @@ function create_md5(str) {
 
 /**
  * wrap_code - add global variable for module
- * @param  {string} code - js code
- * @param  {string} src - original path to code
- * @param {string} root_browser_folder - root folder for js modules
- * @return {string} - js code with anounym function
+ * @param  {string} code
+ * @param  {string} module_name - path to code
+ * @return {string} js
  */
-function wrap_code(code, src, root_browser_folder) {
-  // remove part path before root_browser_folder
-  var module_name = src.replace(new RegExp('^(.+?)('+root_browser_folder+')'), '$2');
+function wrap_code(code, src, browser_dir) {
+  var module_name = src.replace(new RegExp('^(.+?)('+browser_dir+')'), '$2');
   return (
     '(function(__module_name){'+
       code+
@@ -226,7 +200,7 @@ if (!module.parent) {
     const out_dir = path.join(__dirname, './stat/j/');
 
     const src = { input_dir: src_dir, };
-    const out = { output_dir: out_dir, root_browser_folder: input_dir };
+    const out = { output_dir: out_dir, browser_dir: input_dir };
 
     const is_prod = false;
     const path_describe_module = path.join(__dirname, './description_modules.json');

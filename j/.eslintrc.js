@@ -1,17 +1,28 @@
 module.exports = {
   'env': {
-    es6: true,
-    node: true,
-    mocha: true,
-    browser: false,
+    browser: true,
+    node: false,
+    mocha: false,
     jquery: false,
   },
   'extends': 'eslint:recommended',
   'parserOptions': {
-    'ecmaVersion': 9,
-    "sourceType": "module",
+    'ecmaVersion': 2015,
+  },
+  'globals': {
+    'getByID': true,
+    'W': true,
+    'getTarget': true,
+    'rebuildArray': true,
+    'MODULES': true,
+    'cleanInput': true,
+    'removeElArray': true,
+    '_ajx': true,
+    'D': true,
+    'W': true
   },
   'rules': {
+    "no-restricted-syntax": ["error", "WithStatement", "BinaryExpression[operator='in']"],
     "max-len": [ 2, {
       "code": 200, "tabWidth": 2, 'ignoreComments': true, "ignoreUrls": true } ],
     'indent': [
@@ -32,13 +43,9 @@ module.exports = {
       'always'
     ],
     'require-atomic-updates': 'off',
-    "no-unused-vars": ['error', {
-      "varsIgnorePattern": "_",
-      "argsIgnorePattern": "_"
-    }],
     'no-use-before-define': [
       'error',
-      { "functions": false, "classes": false, "variables": false }
+      { "functions": false, "classes": false }
     ],
     'no-multi-spaces': [ 'error' ],
     'array-callback-return': [ 'error' ],
@@ -49,16 +56,27 @@ module.exports = {
     'guard-for-in': [ 'error' ],
     'no-extend-native': [ 'error' ],
 
-    // node js
-    'handle-callback-err': [ 'error' ],
-    'global-require': [ 'error' ],
-    'callback-return': [ 'error' ],
-    'no-buffer-constructor': [ 'error' ],
-    'no-new-require': [ 'error' ],
-
     "eqeqeq": ["error", "always"],
     'no-extra-boolean-cast': ['off'],
     'no-console': ['off'],
     'no-useless-escape': ['off']
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+console.log("I am appended");
+console.log("I am appended");
+console.log("I am appended");
