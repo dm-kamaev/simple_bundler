@@ -8,6 +8,7 @@
   <div id='log'>
 
   </div>
+  <script src='./loader.js'></script>
   <script>
 
 var LIST_MODULES = {
@@ -30,184 +31,15 @@ var LIST_MODULES = {
 };
 
 
+var loader = window.loader;
 
-var loader = (function() {
-  var loader = {};
+loader.set_settings({
+  modules: LIST_MODULES.modules,
+  prefix_url: './stat',
+  prefix_for_vesrion: 'a',
+});
 
-  var PREFIX_VERSION = 'a';
-
-  /**
-   * _prefix - '/stat'
-   * @type {[string='']}
-   */
-  var _prefix = '';
-
-  /**
-   * bus -list action for after download
-   * @type {Array<{ src: string, make_load: function(src: string, module: any )}>}
-   */
-  var bus = [];
-
-
-  /**
-   * listen_load
-   * @param  {string} src - '/j/base/fn.js'
-   * @param  {fcuntion(src: string, module: any)} make_load - action after load
-   */
-  function listen_load(src, make_load) {
-    bus.push({ src: src, make_load: make_load });
-  }
-
-  /**
-   * set_prefix_for_download - set prefix for nginx static
-   * @param {string} prefix
-   */
-  loader.set_prefix_for_download = function (prefix) {
-    _prefix = prefix;
-  };
-
-
-  /**
-   * done - action for emit event 'load'
-   * @param  {string}   src '/j/base/fn.js'
-   * @param  {[any]}   module
-   */
-  loader.done = function(src, module) {
-    for (var i = 0, l = bus.length; i < l; i++) {
-      var el = bus[i];
-      if (!el) {
-        continue;
-      }
-      if (el.src === src) {
-        el.make_load(src, module);
-        bus[i] = null;
-      }
-    }
-    // TODO: clean bus, after length > 100
-  };
-
-
-  /**
-   * require
-   * @todo  add timeout for load module
-   * @param  {string | { src: string }} what
-   * @param  {function(err)} cb
-   */
-  loader.require = function (what, cb) {
-    var src;
-    if (typeof what === 'string') {
-      src = what;
-    }
-    var describe_modules = LIST_MODULES[src];
-    if (is_loaded(src)) {
-      write_log('is_loaded '+src);
-      return cb();
-    }
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.async = true;
-    // script.text = 'alert("12313123");';
-    var version = describe_modules.version;
-    script.setAttribute('src', _prefix+src+'?'+PREFIX_VERSION+version);
-    listen_load(src, function(src, module) {
-      set_loaded(src, module);
-      write_log('load '+src+' '+JSON.stringify(module, null, 2));
-      cb();
-    });
-    script.onload = function () {
-      // console.log('onload');
-    };
-    script.onerror = function () {
-      throw new Error('Fail loaded script '+src);
-    };
-    document.body.appendChild(script);
-  };
-
-
-  /**
-   * set_loaded
-   * @param {string} src - '/j/base/fn.js'
-   */
-  function set_loaded(src, module) {
-    var el = LIST_MODULES[src];
-    el.loaded = true;
-    el.module = module;
-  }
-
-
-  /**
-   * is_loaded
-   * @param  {string}  src - '/j/base/fn.js'
-   * @return {Boolean}
-   */
-  function is_loaded(src) {
-    return LIST_MODULES[src].loaded === true;
-  }
-
-
-  /**
-   * require_list
-   * @param  {string[] | Array<{ src: string }>} list
-   * @param  {function(err)} cb
-   */
-  loader.require_list = function (list, cb) {
-    var arr = [];
-    for (var i = 0, l = list.length; i < l; i++) {
-      var what_load = list[i];
-      arr.push((function(wl) {
-        return function (cb) {
-          loader.require(wl, cb);
-        };
-      })(what_load));
-    }
-    step_by_step(arr, cb);
-  };
-
-
-  /**
-   * get - get module
-   * @param  {string} src - path to module('/j/base/fn.js')
-   * @throws {Error} If not found module
-   * @return {any} module
-   */
-  loader.get = function(src) {
-    var el = LIST_MODULES[src];
-    if (!el || !el.module) {
-      throw new Error('Not found module '+src);
-    }
-    return el.module;
-  };
-
-
-  /**
-   * _step_by_step - loading via queue
-   * @param  {Array<function>} f_array
-   * @param  {function(err)} finish_callback
-   */
-  function step_by_step(f_array, finish_callback) {
-    var current = 0;
-    var finish = f_array.length;
-
-    var internal_callback = function(err, data) {
-      if (err) {
-        finish_callback(err); // Если ошибка, взываем главный callback серии
-      } else if (current < finish) { // Пока не кончился массив берем элемент массива (функцию)
-        var el_array = f_array[current];
-        current++;
-        el_array(internal_callback, data);
-      } else {
-        finish_callback(null, data);
-      }
-    };
-    internal_callback();
-  }
-
-  return loader;
-}());
-
-loader.set_prefix_for_download('./stat');
-
-loader.require_list([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js' ], function () {
+loader.require([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js' ], function () {
   var fn = loader.get('/j/base/fn.js');
   var app_interface_select_report = loader.get('/j/app_interface_select_report/app_interface_select_report.js');
 
