@@ -1,3 +1,8 @@
 .DS_Store
 /node_modules/*
 
+/test/j/**/*
+/test/*.json
+/test/.eslintrc.js
+/test/stat/*
+

@@ -62,21 +62,3 @@ module.exports = {
     'no-useless-escape': ['off']
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-console.log("I am appended");
-console.log("I am appended");
-console.log("I am appended");

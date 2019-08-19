@@ -307,8 +307,3 @@ var module = {
 
 write_log('LOAD '+__module_name);
 loader.done(__module_name, module);
-
-console.log("I am appended");
-console.log("I am appended");
-console.log("I am appended");
-sadasdasdsa

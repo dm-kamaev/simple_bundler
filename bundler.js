@@ -23,24 +23,17 @@ const bundler = module.exports;
  * @param  {boolean} options.is_prod
  * @param  {string} options.path_describe_module - path where file with info for client js
  * @param  {[string]} options.filename - path to filename, if rebuild one file
+ * @param  {[regexp]} options.exclude_file - regexp for ignore file
  */
-bundler.build = async function (src, out, { is_prod, path_describe_module, filename }) {
+bundler.build = async function (src, out, { is_prod, prefix_for_version, path_describe_module, filename, exclude_file }) {
   console.time('Build');
 
   var input_dir = src.input_dir;
   var output_dir = out.output_dir;
   var root_browser_folder = out.root_browser_folder;
 
-  var hash = {};
-  if (wf_sync.exist(path_describe_module)) {
-    hash = JSON.parse(wf_sync.read(path_describe_module));
-    var temp_hash = {};
-    var prefix_folder = input_dir.replace(new RegExp('^(.+?)('+root_browser_folder+')'), '$1');
-    Object.keys(hash).forEach(p => {
-      temp_hash[path.join(prefix_folder, p)] = hash[p];
-    });
-    hash = temp_hash;
-  }
+  var description_modules = new Description_modules(prefix_for_version, path_describe_module);
+  var hash = description_modules.get_hash();
 
   var list_src_paths;
   if (filename) {
@@ -48,9 +41,27 @@ bundler.build = async function (src, out, { is_prod, path_describe_module, filen
   } else {
     list_src_paths = wf_sync.get_list_files(input_dir);
   }
+
   list_src_paths = list_src_paths.filter(p => path.extname(p) === '.js');
 
-  var list_out_paths = list_src_paths.map(p => p.replace(new RegExp('^'+input_dir), output_dir));
+  // filter files by regexp
+  if (exclude_file) {
+    list_src_paths = list_src_paths.filter(p => !exclude_file.test(path.basename(p)));
+  }
+
+  /**
+   * @type {Array<{ key: string, path: string }>} list_out_paths -
+   * [{ key: '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', path: '/Users/mitya/Desktop/Start/bundler/stat/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js' }]
+   */
+  var list_out_paths = list_src_paths.map(p => {
+    return {
+      // remove part path before root_browser_folder
+      key: p.replace(new RegExp('^(.+?)(' + root_browser_folder + ')'), '$2'),
+      path: p.replace(new RegExp('^' + input_dir), output_dir),
+    };
+  });
+  // console.log(list_out_paths);
+  // global.process.exit();
 
   wf_sync.create_folder(output_dir);
 
@@ -58,19 +69,18 @@ bundler.build = async function (src, out, { is_prod, path_describe_module, filen
   var already_exist_dir = {};
 
   // TODO: maybe minify in pools worker thread
-  var actions = list_out_paths.map(function (p, i) {
+  var actions = list_out_paths.map(function (el, i) {
     return (async function () {
-      var dir = path.parse(p).dir;
+      var dir = path.parse(el.path).dir;
       if (!already_exist_dir[dir]) {
         wf_sync.create_folder(dir);
         already_exist_dir[dir] = true;
       }
       var code = await wf.read(list_src_paths[i]);
-      var manage_hash = new Manage_hash(hash, p);
+      var manage_hash = new Manage_hash(hash, el.key);
       if (is_prod) {
         var md5 = create_md5(code);
-        console.log('hash=', hash, path.join(input_dir, p));
-        if (hash[p]) {
+        if (hash[el.key]) {
           if (manage_hash.was_changed(md5)) {
             manage_hash.update(md5);
           }
@@ -79,25 +89,21 @@ bundler.build = async function (src, out, { is_prod, path_describe_module, filen
         }
         code = minify_code(code);
       } else {
-        if (!hash[p]) {
+        if (!hash[el.key]) {
           manage_hash.init(create_md5(code));
         }
       }
 
-      await wf.write(p, wrap_code(code, p, root_browser_folder));
+      await wf.write(el.path, wrap_code(code, el.path, el.key));
     }());
   });
   await Promise.all(actions);
 
   console.log(list_src_paths, list_out_paths);
 
-  Manage_hash.write(path_describe_module, root_browser_folder, hash);
+  description_modules.save(root_browser_folder, hash);
 
   console.timeEnd('Build');
-
-  return {
-    hash
-  };
 };
 
 
@@ -105,13 +111,15 @@ bundler.build = async function (src, out, { is_prod, path_describe_module, filen
  * start_watcher
  * @param  {{ input_dir: string }} src, input_dir - absolute path(file system) to source code
  * @param  {Function} cb      [description]
+ * @return {node-watch}
  */
 bundler.start_watcher = function (src, cb) {
-  node_watch(src.input_dir, { recursive: true }, function (event, filename) {
+  var watcher = node_watch(src.input_dir, { recursive: true }, function (event, filename) {
     // filename - /Users/mitya/Desktop/Start/bundler/src_client/app_interface_select_report/h_list_banks.js
     console.log('[event]', event, 'filename = ', filename);
     cb(filename);
   });
+  return watcher;
 };
 
 
@@ -129,12 +137,9 @@ function create_md5(str) {
  * wrap_code - add global variable for module
  * @param  {string} code - js code
  * @param  {string} src - original path to code
- * @param {string} root_browser_folder - root folder for js modules
  * @return {string} - js code with anounym function
  */
-function wrap_code(code, src, root_browser_folder) {
-  // remove part path before root_browser_folder
-  var module_name = src.replace(new RegExp('^(.+?)('+root_browser_folder+')'), '$2');
+function wrap_code(code, src, module_name) {
   return (
     '(function(__module_name){'+
       code+
@@ -143,14 +148,31 @@ function wrap_code(code, src, root_browser_folder) {
 }
 
 
-class Manage_hash {
+class Description_modules {
   /**
-   * write - write to file hash iwht description modules
+   * constructor
+   * @param  {string} prefix_for_version
    * @param  {string} path_describe_module
+   */
+  constructor(prefix_for_version, path_describe_module) {
+    this._path_describe_module = path_describe_module;
+    this._prefix_for_version = prefix_for_version;
+  }
+
+  get_hash() {
+    var hash = this._build_hash();
+    if (wf_sync.exist(this._path_describe_module)) {
+      hash = JSON.parse(wf_sync.read(this._path_describe_module));
+    }
+    return hash.modules;
+  }
+
+  /**
+   * save - write to file hash with description modules
    * @param  {string} out_folder - '/j/'
    * @param  {{ [path: string]: md5: string, version: number }} input_hash
    */
-  static write(path_describe_module, out_folder, input_hash) {
+  save(out_folder, input_hash) {
     // /^(.+?)(\/j\/)/
     // reg exp for remove extra path
     var reg_exp = new RegExp('^(.+?)('+out_folder+')');
@@ -158,17 +180,31 @@ class Manage_hash {
     Object.keys(input_hash).forEach(path => {
       out_hash[path.replace(reg_exp, '$2')] = input_hash[path] ;
     });
-    wf_sync.write(path_describe_module, JSON.stringify(out_hash, null, 2));
+
+    wf_sync.write(this._path_describe_module, JSON.stringify(this._build_hash(out_hash), null, 2));
   }
+
+
+  _build_hash(modules = {}) {
+    return {
+      prefix_for_version: this._prefix_for_version,
+      modules
+    };
+  }
+
+}
+
+
+class Manage_hash {
 
   /**
    * constructor
    * @param  {{ md5: string, version: string }} hash - modules
    * @param  {string} path - path as key
    */
-  constructor(hash, path) {
+  constructor(hash, key) {
     this._hash = hash;
-    this._key = path;
+    this._key = key;
   }
 
   /**
@@ -218,29 +254,29 @@ function minify_code(code) {
 }
 
 
-if (!module.parent) {
-  void async function () {
-    const input_dir = '/j';
+// if (!module.parent) {
+//   void async function () {
+//     const input_dir = '/j';
 
-    const src_dir = path.join(__dirname, '.'+input_dir+'/' );
-    const out_dir = path.join(__dirname, './stat/j/');
+//     const src_dir = path.join(__dirname, '.'+input_dir+'/' );
+//     const out_dir = path.join(__dirname, './stat/j/');
 
-    const src = { input_dir: src_dir, };
-    const out = { output_dir: out_dir, root_browser_folder: input_dir };
+//     const src = { input_dir: src_dir, };
+//     const out = { output_dir: out_dir, root_browser_folder: input_dir };
 
-    const is_prod = false;
-    const path_describe_module = path.join(__dirname, './description_modules.json');
+//     const is_prod = false;
+//     const path_describe_module = path.join(__dirname, './description_modules.json');
 
-    try {
-      await bundler.build(src, out, { is_prod, path_describe_module });
-      if (!is_prod) {
-        console.log('Start watching -->');
-        bundler.start_watcher(src_dir, async function (filename) {
-          await bundler.build(src, out, { is_prod, path_describe_module, filename });
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }();
-}
+//     try {
+//       await bundler.build(src, out, { is_prod, path_describe_module });
+//       if (!is_prod) {
+//         console.log('Start watching -->');
+//         bundler.start_watcher(src_dir, async function (filename) {
+//           await bundler.build(src, out, { is_prod, path_describe_module, filename });
+//         });
+//       }
+//     } catch (err) {
+//       console.error(err);
+//     }
+//   }();
+// }

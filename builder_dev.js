@@ -19,7 +19,8 @@ void async function () {
   var out = { output_dir: out_dir, root_browser_folder: input_folder };
   var option = {
     is_prod: false,
-    path_describe_module: path.join(__dirname, './description_modules.json')
+    path_describe_module: path.join(__dirname, './description_modules.json'),
+    exclude_file: /^\./,
   };
 
   try {
