@@ -11,42 +11,33 @@
   <script src='./loader.js'></script>
   <script>
 
-var LIST_MODULES = {
-  "/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js": {
-    "md5": "5c6dcf35a07c479957f273a03fc7f3a1",
-    "version": 1
-  },
-  "/j/app_interface_select_report/app_interface_select_report.js": {
-    "md5": "86137ea71c1fa848138025a68e25d700",
-    "version": 1
-  },
-  "/j/app_interface_select_report/h_list_banks.js": {
-    "md5": "78bf7371b5b82d5fe03689def5d84048",
-    "version": 1
-  },
-  "/j/base/fn.js": {
-    "md5": "e5d20c1775700b4e69f44b9ad515a454",
-    "version": 1
-  }
-};
+var MODULES;
+
+fetch('description_modules.json')
+  .then(response => response.json())
+  .then(MODULES => {
+    console.log(MODULES);
+
+    var loader = window.loader;
+
+    loader.set_settings({
+      modules: MODULES.modules,
+      prefix_url: './stat',
+      prefix_for_vesrion: 'a',
+    });
+
+    loader.require([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js' ], function () {
+      var fn = loader.get('/j/base/fn.js');
+      var app_interface_select_report = loader.get('/j/app_interface_select_report/app_interface_select_report.js');
+
+      write_log('MAIN: fn.map = ' + fn.map);
+
+      app_interface_select_report.start();
+    });
+  });
 
 
-var loader = window.loader;
 
-loader.set_settings({
-  modules: LIST_MODULES.modules,
-  prefix_url: './stat',
-  prefix_for_vesrion: 'a',
-});
-
-loader.require([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js' ], function () {
-  var fn = loader.get('/j/base/fn.js');
-  var app_interface_select_report = loader.get('/j/app_interface_select_report/app_interface_select_report.js');
-
-  write_log('MAIN: fn.map = ' + fn.map);
-
-  app_interface_select_report.start();
-});
 
 
 function write_log(str) {

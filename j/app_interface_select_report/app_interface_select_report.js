@@ -1,6 +1,6 @@
 
 
-loader.require_list([ '/j/base/fn.js', ], function () {
+loader.require([ '/j/base/fn.js', ], function () {
 
   var module = {
     start: function() {
