@@ -4,7 +4,7 @@
   "description": "",
   "main": "bundler.js",
   "scripts": {
-    "test": "cp -R j/ test/j; ./node_modules/mocha/bin/mocha test/test.js"
+    "test": "cp -R example/j/ test/j; ./node_modules/mocha/bin/mocha test/test.js"
   },
   "keywords": [],
   "author": "",

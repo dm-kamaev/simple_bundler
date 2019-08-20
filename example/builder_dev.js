@@ -6,7 +6,7 @@
 // TODO: fix this /Users/mitya/Desktop/Start/bundler/j/app_interface_select_report/app_interface_select_report.js in description_modules.json
 // TODO: make config file for different environments
 
-const bundler = require('./bundler.js');
+const bundler = require('../bundler.js');
 const path = require('path');
 
 void async function () {
@@ -21,6 +21,7 @@ void async function () {
     is_prod: false,
     path_describe_module: path.join(__dirname, './description_modules.json'),
     exclude_file: /^\./,
+    prefix_for_version: 'a',
   };
 
   try {

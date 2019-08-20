@@ -1,4 +1,4 @@
-// ФУНКЦИОНАЛЬНЫЕ МЕТОДЫ
+(function(__module_name){// ФУНКЦИОНАЛЬНЫЕ МЕТОДЫ
 
 'use strict';
 
@@ -306,4 +306,6 @@ var module = {
 };
 
 write_log('LOAD '+__module_name);
+
 loader.done(__module_name, module);
+}("/j/base/fn.js"));

@@ -1,4 +1,4 @@
-(function(__module_name){
+
 
 loader.require([ '/j/base/fn.js', ], function () {
 
@@ -15,7 +15,7 @@ loader.require([ '/j/base/fn.js', ], function () {
   });
 
   loader.done(__module_name, module);
+
 });
 
 
-}("/j/app_interface_select_report/app_interface_select_report.js"));

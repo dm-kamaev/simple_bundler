@@ -4,6 +4,7 @@ window.loader = (function() {
   var _is_prod = false;
   var _disable_cache = false;
   var _prefix_for_version = '';
+  var _debug = false;
 
   /**
    * _prefix - '/stat'
@@ -28,18 +29,26 @@ window.loader = (function() {
     bus.push({ src: src, make_load: make_load });
   }
 
+  loader.log = function () {
+    if (_debug) {
+      console.log.apply(console.log, arguments);
+    }
+  };
 
   /**
    * set_settings
-   * @param {{ prefix_url: string, prefix_for_vesrion: string }} options - { prefix_url: string, prefix_for_vesrion: string }
+   * @param {{ prefix_url: string, prefix_for_vesrion: string }} options - { prefix_url: string, prefix_for_version: string }
    * set prefix for nginx static
    */
   loader.set_settings = function (options) {
-    _modules = options.modules;
+    _modules = options.description_modules.modules;
+    _prefix_for_version = options.description_modules.prefix_for_version;
+
     _is_prod = options.is_prod;
     _disable_cache = options.disable_cache;
     _prefix_url = options.prefix_url;
-    _prefix_for_version = options.prefix_for_vesrion;
+
+    _debug = options.debug;
   };
 
 
@@ -65,7 +74,6 @@ window.loader = (function() {
 
   /**
    * require
-   * @todo  add timeout for load module
    * @param  {string | Array<{ src: string }>} what
    * @param  {function(err)} cb
    */
@@ -78,7 +86,11 @@ window.loader = (function() {
     if (typeof what === 'string') {
       src = what;
     }
+
+    check_exist(src);
+
     var describe_modules = _modules[src];
+
     if (is_loaded(src)) {
       write_log('is_loaded '+src);
       return cb();
@@ -88,13 +100,24 @@ window.loader = (function() {
     script.async = true;
     // script.text = 'alert("12313123");';
     var version = describe_modules.version;
+    var src_attribute = '';
     if (_is_prod) {
-      script.setAttribute('src', _prefix_url+src+'?'+_prefix_for_version+version);
+      src_attribute = _prefix_url+src+'?'+_prefix_for_version+version;
     } else if (_disable_cache) {
-      script.setAttribute('src', _prefix_url+src+'?no_cache='+Date.now());
+      src_attribute = _prefix_url+src+'?no_cache='+Date.now();
     } else {
-      script.setAttribute('src', _prefix_url+src);
+      src_attribute = _prefix_url+src;
     }
+
+    loader.log('setAttribute=', src_attribute);
+
+
+    script.setAttribute('src', src_attribute);
+
+    // if (!_is_prod) {
+    search_duplicate_and_circular_dependencies();
+    // }
+
     listen_load(src, function(src, module) {
       set_loaded(src, module);
       write_log('load '+src+' '+JSON.stringify(module, null, 2));
@@ -120,6 +143,38 @@ window.loader = (function() {
     el.module = module;
   }
 
+
+  /**
+   * is_loaded
+   * @param  {string}  src - '/j/base/fn.js'
+   * @throws {Error} If not found module
+   */
+  function check_exist(src) {
+    if (!_modules[src]) {
+      throw new Error('Not found module "'+ src+'"');
+    }
+  }
+
+
+  function search_duplicate_and_circular_dependencies() {
+    var hash = {};
+    var scripts = document.scripts;
+    for (var i = 0, l = scripts.length; i < l; i++) {
+      let src = scripts[i].getAttribute('src');
+      if (!src) {
+        continue;
+      }
+      src = src.replace(/\.js\/\?.+$/, '.js');
+      src = src.replace(/.js\?.+$/, '.js');
+      if (hash[src]) {
+        throw new Error('[loader.js]: Duplicate script '+src+', may be circular dependencies');
+      } else {
+        hash[src] = src;
+      }
+      console.log('DEBUG=', src);
+      // console.log(src);
+    }
+  }
 
   /**
    * is_loaded

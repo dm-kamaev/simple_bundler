@@ -253,30 +253,3 @@ function minify_code(code) {
   return res.code;
 }
 
-
-// if (!module.parent) {
-//   void async function () {
-//     const input_dir = '/j';
-
-//     const src_dir = path.join(__dirname, '.'+input_dir+'/' );
-//     const out_dir = path.join(__dirname, './stat/j/');
-
-//     const src = { input_dir: src_dir, };
-//     const out = { output_dir: out_dir, root_browser_folder: input_dir };
-
-//     const is_prod = false;
-//     const path_describe_module = path.join(__dirname, './description_modules.json');
-
-//     try {
-//       await bundler.build(src, out, { is_prod, path_describe_module });
-//       if (!is_prod) {
-//         console.log('Start watching -->');
-//         bundler.start_watcher(src_dir, async function (filename) {
-//           await bundler.build(src, out, { is_prod, path_describe_module, filename });
-//         });
-//       }
-//     } catch (err) {
-//       console.error(err);
-//     }
-//   }();
-// }
