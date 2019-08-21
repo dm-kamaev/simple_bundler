@@ -1,5 +1,5 @@
 {
-  "name": "bundler",
+  "name": "simple_bundler",
   "version": "0.0.1",
   "description": "simple loader and bundler/builders for javascript code",
   "main": "index.js",
