@@ -26,6 +26,10 @@ const bundler = module.exports;
  * @param  {[regexp]} options.exclude_file - regexp for ignore file
  */
 bundler.build = async function (src, out, { is_prod, prefix_for_version, path_describe_module, filename, exclude_file }) {
+  if (!prefix_for_version) {
+    throw new Error('Not exist prefix_for_version');
+  }
+
   console.time('Build');
 
   var input_dir = src.input_dir;
@@ -241,15 +245,21 @@ class Manage_hash {
 
 /**
  * minify_code
- * @param  {string} code
+ * @param  {string} code - `window.asdadsads = function test(petya. vasya) { return petya + vasya; }; window.asdadsads(1,2);`
  * @return {string} code - minify code
  * @throws {Error} Terser error
  */
 function minify_code(code) {
-  var res = Terser.minify(code);
+  var res = Terser.minify(code, {
+    mangle: {
+      // mangle function name
+      // toplevel: true,
+    },
+  });
   if (res.error) {
     throw res.error;
   }
   return res.code;
 }
+
 

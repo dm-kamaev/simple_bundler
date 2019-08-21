@@ -1,1 +1,21 @@
-(function(__module_name){loader.require(["/j/base/fn.js"],function(){var e={start:function(){write_log("I am START "+__module_name)}};write_log("LOAD app_interface_select_report ..."),loader.get("/j/base/fn.js").foreach_value([1,2,3],function(e){write_log(e)}),loader.done(__module_name,e)});}("/j/app_interface_select_report/app_interface_select_report.js"));
+(function(__module_name){
+
+loader.require([ '/j/base/fn.js', ], function () {
+
+  var module = {
+    start: function() {
+      write_log('Call module '+ __module_name);
+    }
+  };
+
+  var fn = loader.get('/j/base/fn.js');
+  fn.foreach_value([ 1, 2, 3 ], function (el) {
+    write_log('<p style=margin-left:40px;>Action before load '+__module_name+' '+el+'</p>');
+  });
+
+  write_log('<p style=margin-left:20px;># Finish load '+__module_name+'</p>');
+  loader.done(__module_name, module);
+});
+
+
+}("/j/app_interface_select_report/app_interface_select_report.js"));

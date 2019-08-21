@@ -1,12 +1,12 @@
 {
   "name": "bundler",
-  "version": "1.0.0",
-  "description": "",
-  "main": "bundler.js",
+  "version": "0.0.1",
+  "description": "simple loader and bundler/builders for javascript code",
+  "main": "index.js",
   "scripts": {
     "test": "cp -R example/j/ test/j; ./node_modules/mocha/bin/mocha test/test.js"
   },
-  "keywords": [],
+  "keywords": [ "build", "builder", "bundler", "make", "tool", "module system", "loader" ],
   "author": "",
   "license": "ISC",
   "dependencies": {

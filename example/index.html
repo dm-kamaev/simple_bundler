@@ -8,6 +8,8 @@
   <div id='log'>
 
   </div>
+
+  <div id=chart></div>
   <script src='../loader.js'></script>
   <script>
 
@@ -25,11 +27,41 @@ fetch('description_modules.json')
       debug: true
     });
 
+    write_log('<b>### START loading entry point</b>');
     loader.require([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js' ], function () {
       var fn = loader.get('/j/base/fn.js');
+      fn.foreach_value([1,2,3], function() {});
       var app_interface_select_report = loader.get('/j/app_interface_select_report/app_interface_select_report.js');
 
-      write_log('MAIN: fn.map = ' + fn.map);
+      write_log('<b>### FINISH loading entry point</b>');
+      setTimeout(function () {
+        loader.require('/j/lib/highcharts.js', function () {
+          var Highcharts = loader.get('/j/lib/highcharts.js');
+          Highcharts.chart('chart', {
+            chart: {
+              type: 'bar'
+            },
+            title: {
+              text: 'Fruit Consumption'
+            },
+            xAxis: {
+              categories: ['Apples', 'Bananas', 'Oranges']
+            },
+            yAxis: {
+              title: {
+                text: 'Fruit eaten'
+              }
+            },
+            series: [{
+              name: 'Jane',
+              data: [1, 0, 4]
+            }, {
+              name: 'John',
+              data: [5, 7, 3]
+            }]
+          });
+        });
+      }, 1000);
 
       app_interface_select_report.start();
     });

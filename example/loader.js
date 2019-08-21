@@ -1,4 +1,4 @@
-window.loader = (function() {
+(function() {
   var loader = {};
 
   var _is_prod = false;
@@ -35,10 +35,17 @@ window.loader = (function() {
     }
   };
 
+
   /**
    * set_settings
-   * @param {{ prefix_url: string, prefix_for_vesrion: string }} options - { prefix_url: string, prefix_for_version: string }
+   * @param {{ description_modules: { prefix_for_version: string, modules: Object }, prefix_url: string, prefix_for_vesrion: string, is_prod: boolean }} options - { prefix_url: string, prefix_for_version: string }
    * set prefix for nginx static
+   * {
+   *   description_modules: MODULES,
+   *   prefix_url: './stat',
+   *   is_prod: true,
+   *   debug: true
+   * }
    */
   loader.set_settings = function (options) {
     _modules = options.description_modules.modules;
@@ -58,6 +65,9 @@ window.loader = (function() {
    * @param  {[any]}   module
    */
   loader.done = function(src, module) {
+    if (!module) {
+      throw new Error('[loader.js] Not found module for done');
+    }
     for (var i = 0, l = bus.length; i < l; i++) {
       var el = bus[i];
       if (!el) {
@@ -74,7 +84,7 @@ window.loader = (function() {
 
   /**
    * require
-   * @param  {string | Array<{ src: string }>} what
+   * @param  {string | string[]>} what
    * @param  {function(err)} cb
    */
   loader.require = function (what, cb) {
@@ -92,7 +102,7 @@ window.loader = (function() {
     var describe_modules = _modules[src];
 
     if (is_loaded(src)) {
-      write_log('is_loaded '+src);
+      loader.log('[loader.js] src = "'+src+'" is loaded');
       return cb();
     }
     var script = document.createElement('script');
@@ -109,7 +119,7 @@ window.loader = (function() {
       src_attribute = _prefix_url+src;
     }
 
-    loader.log('setAttribute=', src_attribute);
+    loader.log('[loader.js] setAttribute=', src_attribute);
 
 
     script.setAttribute('src', src_attribute);
@@ -120,7 +130,6 @@ window.loader = (function() {
 
     listen_load(src, function(src, module) {
       set_loaded(src, module);
-      write_log('load '+src+' '+JSON.stringify(module, null, 2));
       cb();
     });
     script.onload = function () {
@@ -156,6 +165,11 @@ window.loader = (function() {
   }
 
 
+  /**
+   * search_duplicate_and_circular_dependencies
+   * @todo may be clall only for development mode
+   * @throws {Error} If you re-add script(error in loader code's or circular dependencies into user code)
+   */
   function search_duplicate_and_circular_dependencies() {
     var hash = {};
     var scripts = document.scripts;
@@ -171,10 +185,9 @@ window.loader = (function() {
       } else {
         hash[src] = src;
       }
-      console.log('DEBUG=', src);
-      // console.log(src);
     }
   }
+
 
   /**
    * is_loaded
@@ -188,7 +201,7 @@ window.loader = (function() {
 
   /**
    * require_list
-   * @param  {string[] | Array<{ src: string }>} list
+   * @param  {string[]} list
    * @param  {function(err)} cb
    */
   function require_list(list, cb) {
@@ -214,7 +227,7 @@ window.loader = (function() {
   loader.get = function(src) {
     var el = _modules[src];
     if (!el || !el.module) {
-      throw new Error('Not found module '+src);
+      throw new Error('Not loaded module '+src);
     }
     return el.module;
   };
@@ -243,5 +256,12 @@ window.loader = (function() {
     internal_callback();
   }
 
-  return loader;
+  if (typeof define === 'function' && define.amd) {
+    define('loader', function () { return loader; });
+  } else if (typeof module !== 'undefined' && module.exports) {
+    module.exports = loader;
+  } else {
+    window.loader = loader;
+  }
 }());
+

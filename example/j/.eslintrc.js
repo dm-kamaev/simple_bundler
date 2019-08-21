@@ -19,7 +19,10 @@ module.exports = {
     'removeElArray': true,
     '_ajx': true,
     'D': true,
-    'W': true
+    'W': true,
+    __module_name: true,
+    write_log: true,
+    loader: true
   },
   'rules': {
     "no-restricted-syntax": ["error", "WithStatement", "BinaryExpression[operator='in']"],

@@ -20,6 +20,14 @@
     "/j/.eslintrc.js": {
       "md5": "7c98b9d36f9f1fae3bdc5193c6a4f08f",
       "version": 1
+    },
+    "/j/highcharts.js": {
+      "md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "version": 1
+    },
+    "/j/lib/highcharts.js": {
+      "md5": "f110a2f87be813b427f5f3a11cd76af0",
+      "version": 1
     }
   }
 }
