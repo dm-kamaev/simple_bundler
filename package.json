@@ -4,7 +4,8 @@
   "description": "simple loader and bundler/builders for javascript code",
   "main": "index.js",
   "scripts": {
-    "test": "cp -R example/j/ test/j; ./node_modules/mocha/bin/mocha test/test.js"
+    "test": "cp -R example/j/ test/j; ./node_modules/mocha/bin/mocha test/test.js",
+    "build": "node ./build.js"
   },
   "keywords": [ "build", "builder", "bundler", "make", "tool", "module system", "loader" ],
   "author": "",
