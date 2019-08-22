@@ -63,11 +63,14 @@
    * done - action for emit event 'load'
    * @param  {string}   src '/j/base/fn.js'
    * @param  {[any]}   module
+   * @return {any} module
    */
   loader.done = function(src, module) {
     if (!module) {
       throw new Error('[loader.js] Not found module for done');
     }
+
+    // TODO: clean bus, after length > 100
     for (var i = 0, l = bus.length; i < l; i++) {
       var el = bus[i];
       if (!el) {
@@ -78,7 +81,7 @@
         bus[i] = null;
       }
     }
-    // TODO: clean bus, after length > 100
+    return module;
   };
 
 
