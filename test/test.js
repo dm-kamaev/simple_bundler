@@ -19,6 +19,11 @@ const option = {
   prefix_for_version: 'a',
   path_describe_module,
   exclude_file: /^\./,
+  not_wrapping_to_module: function (file_path) {
+    if (/lib\.js/.test(file_path)) {
+      return true;
+    }
+  }
 };
 // ### end settings for build ###
 
@@ -30,7 +35,8 @@ describe('bundler.js', function() {
   });
 
   it('test prod build', async function () {
-    await prod(src, out, option);
+    this.timeout(15000);
+    return await prod(src, out, option);
   });
 
 });

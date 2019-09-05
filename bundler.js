@@ -24,8 +24,9 @@ const bundler = module.exports;
  * @param  {string} options.path_describe_module - path where file with info for client js
  * @param  {[string]} options.filename - path to filename, if rebuild one file
  * @param  {[regexp]} options.exclude_file - regexp for ignore file
+ * @param  {[function(): boolean]} options.not_wrapping_to_module - filter for file, which not wrap as module
  */
-bundler.build = async function (src, out, { is_prod, prefix_for_version, path_describe_module, filename, exclude_file }) {
+bundler.build = async function (src, out, { is_prod, prefix_for_version, path_describe_module, filename, exclude_file, not_wrapping_to_module }) {
   if (!prefix_for_version) {
     throw new Error('Not exist prefix_for_version');
   }
@@ -98,7 +99,10 @@ bundler.build = async function (src, out, { is_prod, prefix_for_version, path_de
         }
       }
 
-      await wf.write(el.path, wrap_code(code, el.path, el.key));
+      if (!not_wrapping_to_module || not_wrapping_to_module(el.path) !== true) {
+        code = wrap_code(code, el.path, el.key);
+      }
+      await wf.write(el.path, code);
     }());
   });
   await Promise.all(actions);
