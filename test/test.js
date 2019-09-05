@@ -62,6 +62,8 @@ async function dev(src, out, option) {
         var modules = JSON.parse(wf_sync.read(path_describe_module)).modules;
         var { version, md5 } = modules['/j/base/fn.js'];
 
+        assert.ok(wf_sync.read(path.join(__dirname, './j/lib.js')) === wf_sync.read(path.join(__dirname, './stat/j/lib.js')), 'Not equal files');
+
         assert.ok(typeof version === 'number', 'Wrong version');
         assert.ok(typeof md5 === 'string', 'Wrong md5');
         previous_vesrion = version;
