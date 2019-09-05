@@ -151,7 +151,8 @@ function wrap_code(code, src, module_name) {
   return (
     '(function(__module_name){'+
       code+
-    '}("'+module_name+'"));'
+    // add \n, protection from inline comment(//)
+    '\n}("'+module_name+'"));'
   );
 }
 
