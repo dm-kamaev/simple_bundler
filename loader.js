@@ -53,7 +53,7 @@
 
     _is_prod = options.is_prod;
     _disable_cache = options.disable_cache;
-    _prefix_url = options.prefix_url;
+    _prefix_url = options.prefix_url.replace(/\/$/, '');
 
     _debug = options.debug;
   };
@@ -264,7 +264,7 @@
   } else if (typeof module !== 'undefined' && module.exports) {
     module.exports = loader;
   } else {
-    window.loader = loader;
+    return loader;
   }
 }());
 
