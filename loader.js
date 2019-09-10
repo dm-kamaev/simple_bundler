@@ -23,11 +23,18 @@
   /**
    * listen_load
    * @param  {string} src - '/j/base/fn.js'
-   * @param  {fcuntion(src: string, module: any)} make_load - action after load
+   * @param  {function(src: string, module: any)} make_load - action after load
    */
   function listen_load(src, make_load) {
-    bus.push({ src: src, make_load: make_load });
+    for (var i = 0, l = bus.length; i < l; i++) {
+      var el = bus[i];
+      if (el.src === src) {
+        return el.make_load.push(make_load);
+      }
+    }
+    bus.push({ src: src, make_load: [ make_load ] });
   }
+
 
   loader.log = function () {
     if (_debug) {
@@ -77,8 +84,11 @@
         continue;
       }
       if (el.src === src) {
-        el.make_load(src, module);
-        bus[i] = null;
+        // call all actions(after load) and clean list
+        for (var j = 0, l1 = el.make_load.length; j < l1; j++) {
+          el.make_load[j](src, module);
+        }
+        el.make_load = [];
       }
     }
     return module;
@@ -108,6 +118,15 @@
       loader.log('[loader.js] src = "'+src+'" is loaded');
       return cb();
     }
+
+    if (is_already_loading(src)) {
+      return listen_load(src, function(src, module) {
+        set_loaded(src, module);
+        cb();
+      });
+    }
+
+    start_loading(src);
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.async = true;
@@ -145,12 +164,48 @@
   };
 
 
+  loader.require_parallel = function (list, cb) {
+    var arr = [];
+    for (var i = 0, l = list.length; i < l; i++) {
+      var what_load = list[i];
+      arr.push((function(wl) {
+        return function (cb) {
+          loader.require(wl, cb);
+        };
+      })(what_load));
+    }
+    parallel(arr, 100, cb);
+  };
+
+
   /**
-   * set_loaded
+   * start_loading - add field 'loading=true'
+   * @param  {string} src
+   */
+  function start_loading(src) {
+    var el = _modules[src];
+    el.loading = true;
+  }
+
+
+  /**
+   * is_already_loading - check field 'loading=true'
+   * @param  {string} src
+   * @return {Boolean}
+   */
+  function is_already_loading(src) {
+    return _modules[src].loading === true;
+  }
+
+
+  /**
+   * set_loaded - loading=false, loaded=false and set module
    * @param {string} src - '/j/base/fn.js'
+   * @param {any} module
    */
   function set_loaded(src, module) {
     var el = _modules[src];
+    el.loading = false;
     el.loaded = true;
     el.module = module;
   }
@@ -259,11 +314,49 @@
     internal_callback();
   }
 
+
+  function parallel(f_array, limit, finish_callback) {
+    // Счетчик операций выполненных, c единицы так как мы попадаем сюда,
+    // когда уже одна функция отработала
+    var count_make_operation = 1;
+    var result = [];
+    var len_array = f_array.length;
+    var finish = limit || len_array;
+    // в случае, если ограничение по запуску функций больше длины массива, имеем проблему
+    // что не вызовется финишный cb.
+    finish = (finish > len_array) ? len_array : finish;
+    var incrment_callback = function(err, data) {
+      if (data) {
+        result.push(data);
+      }
+      if (err) {
+        finish_callback(err);
+      } else if (count_make_operation < finish) {
+        count_make_operation++;
+      } else {
+        if (limit && count_make_operation < len_array) {
+          count_make_operation++;
+          // делаем -1, ибо элемент нужен предыдущий, а индекс следующий см. коммент выше
+          f_array[count_make_operation-1](incrment_callback);
+        } else {
+          finish_callback(null, result);
+        }
+      }
+    };
+
+    for (var i = 0; i < finish; i++) {
+      var func = f_array[i] || null;
+      if (func) { func(incrment_callback); }
+    }
+
+  }
+
   if (typeof define === 'function' && define.amd) {
     define('loader', function () { return loader; });
   } else if (typeof module !== 'undefined' && module.exports) {
     module.exports = loader;
   } else {
+    window.loader = loader;
     return loader;
   }
 }());

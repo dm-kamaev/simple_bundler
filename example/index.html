@@ -13,13 +13,13 @@
   <script src='../loader.min.js'></script>
   <script>
 
-fetch('description_modules.json')
+window.fetch('description_modules.json')
   .then(response => response.json())
   .then(MODULES => {
     console.log(MODULES);
 
     var loader = window.loader;
-
+    console.log(loader);
     loader.set_settings({
       description_modules: MODULES,
       prefix_url: './stat',
@@ -28,7 +28,8 @@ fetch('description_modules.json')
     });
 
     write_log('<b>### START loading entry point</b>');
-    loader.require([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js' ], function () {
+    // loader.require([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js', '/j/lib/highcharts.js' ], function () {
+    loader.require_parallel([ '/j/app_interface_reports_to_xlsx/app_interface_reports_to_xlsx.js', '/j/app_interface_select_report/app_interface_select_report.js', '/j/base/fn.js', '/j/lib/highcharts.js' ], function () {
       var fn = loader.get('/j/base/fn.js');
       fn.foreach_value([1,2,3], function() {});
       var app_interface_select_report = loader.get('/j/app_interface_select_report/app_interface_select_report.js');
