@@ -89,8 +89,13 @@
           el.make_load[j](src, module);
         }
         el.make_load = [];
+        return;
       }
     }
+
+    // if load module as inline script
+    set_loaded_as_inline(src, module);
+
     return module;
   };
 
@@ -127,11 +132,61 @@
     }
 
     start_loading(src);
+
+    var script = create_script(src, describe_modules.version);
+
+    // if (!_is_prod) {
+    search_duplicate_and_circular_dependencies();
+    // }
+
+    listen_load(src, function(src, module) {
+      set_loaded(src, module);
+      cb();
+    });
+    script.onload = function () {
+      // console.log('onload', src);
+    };
+
+    /**
+     * onerror
+     * @param  {HTMLScriptElement} script
+     * @return {function}
+     */
+    var onerror = function(script) {
+      return function () {
+        var el = _modules[src];
+        if (el.try_load--) {
+          loader.log('[loader.js] retry load', script);
+          var transform_url = (url) => url.replace(/\?.+/, '')+'?retry_load='+Date.now()+'&number_try='+el.try_load;
+          // remove script
+          script.outerHTML = '';
+          var repeat_script = create_script(src, describe_modules.version, transform_url);
+          repeat_script.onerror = onerror(repeat_script);
+          document.body.appendChild(repeat_script);
+        } else {
+          throw new Error('Fail loaded script ' + src);
+        }
+      };
+    };
+
+    script.onerror = onerror(script);
+
+    document.body.appendChild(script);
+  };
+
+
+  /**
+   * create_script
+   * @param  {string} src
+   * @param  {string} version
+   * @param  {function(url: string): string} transform_url - transform if you want for retry load
+   * @return {HTMLScriptElement}
+   */
+  function create_script(src, version, transform_url) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.async = true;
     // script.text = 'alert("12313123");';
-    var version = describe_modules.version;
     var src_attribute = '';
     if (_is_prod) {
       src_attribute = _prefix_url+src+'?'+_prefix_for_version+version;
@@ -143,28 +198,19 @@
 
     loader.log('[loader.js] setAttribute=', src_attribute);
 
+    src_attribute = transform_url ? transform_url(src_attribute) : src_attribute;
 
     script.setAttribute('src', src_attribute);
-
-    // if (!_is_prod) {
-    search_duplicate_and_circular_dependencies();
-    // }
-
-    listen_load(src, function(src, module) {
-      set_loaded(src, module);
-      cb();
-    });
-    script.onload = function () {
-      // console.log('onload');
-    };
-    script.onerror = function () {
-      throw new Error('Fail loaded script '+src);
-    };
-    document.body.appendChild(script);
-  };
+    return script;
+  }
 
 
-  loader.require_parallel = function (list, cb) {
+  /**
+   * require_all
+   * @param  {Array<string>} list
+   * @param  {Function} cb
+   */
+  loader.require_all = function (list, cb) {
     var arr = [];
     for (var i = 0, l = list.length; i < l; i++) {
       var what_load = list[i];
@@ -185,6 +231,8 @@
   function start_loading(src) {
     var el = _modules[src];
     el.loading = true;
+    // number try for load script
+    el.try_load = 5;
   }
 
 
@@ -208,6 +256,17 @@
     el.loading = false;
     el.loaded = true;
     el.module = module;
+  }
+
+
+  /**
+   * set_loaded_as_inline - if you want load module as inline js code
+   * @param {string} src - '/j/base/fn.js'
+   * @param {any} module
+   */
+  function set_loaded_as_inline(src, module) {
+    _modules[src] = {};
+    set_loaded(src, module);
   }
 
 
@@ -236,6 +295,7 @@
       if (!src) {
         continue;
       }
+      // remove version from url
       src = src.replace(/\.js\/\?.+$/, '.js');
       src = src.replace(/.js\?.+$/, '.js');
       if (hash[src]) {
@@ -351,6 +411,7 @@
 
   }
 
+
   if (typeof define === 'function' && define.amd) {
     define('loader', function () { return loader; });
   } else if (typeof module !== 'undefined' && module.exports) {
@@ -360,4 +421,3 @@
     return loader;
   }
 }());
-
